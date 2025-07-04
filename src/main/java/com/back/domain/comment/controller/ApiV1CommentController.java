@@ -38,4 +38,13 @@ public class ApiV1CommentController {
         CreateCommentResponseDto comment = commentService.getComment(postId, commentId);
         return ResponseEntity.ok(comment);
     }
+
+    @PutMapping("/{commentId}")
+    public ResponseEntity<CreateCommentResponseDto> modifyComment(
+            @PathVariable long postId,
+            @PathVariable long commentId,
+            @RequestBody CreateCommentRequestDto requestDto) {
+        CreateCommentResponseDto responseDto = commentService.modifyComment(postId, commentId, requestDto);
+        return  ResponseEntity.ok(responseDto);
+    }
 }

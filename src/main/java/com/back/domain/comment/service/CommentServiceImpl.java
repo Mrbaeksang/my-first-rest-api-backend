@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -63,5 +64,22 @@ public class CommentServiceImpl implements CommentService {
                 ))
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found with id: " + commentId));
         return comment;
+    }
+
+    @Override
+    public CreateCommentResponseDto modifyComment(long postId, long commentId, CreateCommentRequestDto requestDto) {
+        Comment comment = commentRepository.findByIdAndPostId(commentId, postId)
+                .orElseThrow(() -> new IllegalArgumentException("Comment not found with id: " + commentId));
+
+        comment.setContent(requestDto.getContent());
+        Comment updatedComment = commentRepository.save(comment);
+
+        return new CreateCommentResponseDto(
+                updatedComment.getId(),
+                updatedComment.getContent(),
+                updatedComment.getCreateDate(),
+                updatedComment.getModifyDate(),
+                updatedComment.getPost().getId()
+        );
     }
 }

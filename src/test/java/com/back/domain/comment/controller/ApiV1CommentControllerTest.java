@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.domain.comment.dto.CreateCommentRequestDto;
 import com.back.domain.comment.dto.CreateCommentResponseDto;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -157,6 +158,44 @@ class ApiV1CommentControllerTest {
                 .andExpect(handler().methodName("getComment")) // 예상되는 메서드 이름
                 .andExpect(jsonPath("$.id").value(commentId))
                 .andExpect(jsonPath("$.content").value(commentContent))
+                .andExpect(jsonPath("$.postId").value(postId));
+    }
+
+    @Test
+    @DisplayName("t10: 댓글 수정 성공")
+    void t10_modifyComment_success() throws Exception {
+        // given
+        // 1. 테스트용 게시글 생성
+        long postId = postService.create(new CreatePostRequestDto("댓글 수정용 게시글", "내용")).getId();
+
+        // 2. 댓글 생성 및 ID 획득
+        String originalContent = "수정 전 댓글 내용";
+        ResultActions createResult = mvc.perform(post("/api/v1/posts/" + postId + "/comments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CreateCommentRequestDto(originalContent))))
+                .andExpect(status().isCreated());
+
+        long commentId = objectMapper.readValue(createResult.andReturn().getResponse().getContentAsString(), CreateCommentResponseDto.class).getId();
+
+        // 3. 수정할 내용 준비
+        String modifiedContent = "수정된 댓글 내용";
+        String requestBody = String.format("{\"content\": \"%s\"}", modifiedContent);
+
+        // when
+        // 4. MockMvc를 사용하여 PUT 요청 전송
+        ResultActions resultActions = mvc.perform(put("/api/v1/posts/" + postId + "/comments/" + commentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andDo(print());
+
+        // then
+        // 5. 응답 검증
+        resultActions
+                .andExpect(status().isOk()) // HTTP 200 OK
+                .andExpect(handler().handlerType(ApiV1CommentController.class))
+                .andExpect(handler().methodName("modifyComment")) // 예상되는 메서드 이름
+                .andExpect(jsonPath("$.id").value(commentId))
+                .andExpect(jsonPath("$.content").value(modifiedContent))
                 .andExpect(jsonPath("$.postId").value(postId));
     }
 }
