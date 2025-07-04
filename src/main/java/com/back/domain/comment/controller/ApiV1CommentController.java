@@ -47,4 +47,13 @@ public class ApiV1CommentController {
         CreateCommentResponseDto responseDto = commentService.modifyComment(postId, commentId, requestDto);
         return  ResponseEntity.ok(responseDto);
     }
+
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable long postId,
+            @PathVariable long commentId) {
+        commentService.deleteComment(postId, commentId);
+        return ResponseEntity.noContent().build();
+
+    }
 }

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.back.domain.comment.dto.CreateCommentRequestDto;
 import com.back.domain.comment.dto.CreateCommentResponseDto;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -197,5 +198,34 @@ class ApiV1CommentControllerTest {
                 .andExpect(jsonPath("$.id").value(commentId))
                 .andExpect(jsonPath("$.content").value(modifiedContent))
                 .andExpect(jsonPath("$.postId").value(postId));
+    }
+
+    @Test
+    @DisplayName("t11: 댓글 삭제 성공")
+    void t11_deleteComment_success() throws Exception {
+        // given
+        // 1. 테스트용 게시글 생성
+        long postId = postService.create(new CreatePostRequestDto("댓글 삭제용 게시글", "내용")).getId();
+
+        // 2. 댓글 생성 및 ID 획득
+        String originalContent = "삭제될 댓글 내용";
+        ResultActions createResult = mvc.perform(post("/api/v1/posts/" + postId + "/comments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CreateCommentRequestDto(originalContent))))
+                .andExpect(status().isCreated());
+
+        long commentId = objectMapper.readValue(createResult.andReturn().getResponse().getContentAsString(), CreateCommentResponseDto.class).getId();
+
+        // when
+        // 3. MockMvc를 사용하여 DELETE 요청 전송
+        ResultActions resultActions = mvc.perform(delete("/api/v1/posts/" + postId + "/comments/" + commentId))
+                .andDo(print());
+
+        // then
+        // 4. 응답 검증
+        resultActions
+                .andExpect(status().isNoContent()) // HTTP 204 No Content
+                .andExpect(handler().handlerType(ApiV1CommentController.class))
+                .andExpect(handler().methodName("deleteComment")); // 예상되는 메서드 이름
     }
 }
